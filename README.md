@@ -2,7 +2,7 @@
 
 This project investigates how covariance matrix estimation affects the out-of-sample performance and stability of mean-variance optimised portfolios. I compare the standard sample covariance matrix with an exponentially weighted covariance estimator and Ledoit-Wolf shrinkage, using an equally weighted portfolio as a benchmark.
 
-The analysis uses daily returns for 10 large-cap US stocks from 2020 to 2024 and evaluates the strategies using a rolling out-of-sample backtest.
+The analysis uses daily returns for 10 US equities from 2020 to 2024 and evaluates the strategies using a rolling out-of-sample backtest.
 
 ## Methodology
 
