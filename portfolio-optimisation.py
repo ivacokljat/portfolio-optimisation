@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[166]:
-
-
 import yfinance as yf
 import pandas as pd
 import datetime
@@ -12,6 +6,7 @@ from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 from sklearn.covariance import LedoitWolf
 
+# Data collection and preparation
 
 tickers = ['AAPL' , 'MSFT', 'META', 'AMZN', 'NVDA', 'JPM', 'PFE', 'XOM', 'DIS', 'JNJ']
 start = datetime.date(2020, 1, 1)
@@ -23,6 +18,8 @@ close_prices = data["Close"]
 
 returns = close_prices.pct_change().dropna()
 returns = returns[tickers]
+
+# Efficient frontier
 
 mean_returns = returns.mean().to_numpy()
 cov_matrix = returns.cov().to_numpy()
@@ -65,6 +62,8 @@ plt.ylabel("Expected daily return")
 plt.title("Efficient Frontier")
 plt.show()
 
+# Rolling out-of-sample backtest
+
 annual_risk_free_rate = 0.03
 daily_risk_free_rate = (1 + annual_risk_free_rate)**(1/252) - 1
 
@@ -72,12 +71,7 @@ def negative_sharpe(w, mean_returns, cov_matrix, daily_risk_free_rate):
     portfolio_return = w @ mean_returns
     portfolio_volatility = np.sqrt(w @ cov_matrix @ w)
     return -(portfolio_return - daily_risk_free_rate) / portfolio_volatility
-
-def training_cov(training_returns):
-    training_mean_returns = training_returns.mean().to_numpy()
-    training_cov_matrix = training_returns.cov().to_numpy()
-
-    return training_mean_returns, training_cov_matrix
+    
 
 def optimal_portfolio(training_returns,training_example):
 
@@ -94,9 +88,17 @@ def optimal_portfolio(training_returns,training_example):
         raise RuntimeError(result.message)
     
     return result.x
+
+# Covariance estimators
     
 window_size = 252
 holding_period = 21
+
+def training_cov(training_returns):
+    training_mean_returns = training_returns.mean().to_numpy()
+    training_cov_matrix = training_returns.cov().to_numpy()
+
+    return training_mean_returns, training_cov_matrix
 
 weight_history_cov = []
 portfolio_returns_cov = []
@@ -107,10 +109,6 @@ for i in range(0,len(returns) - window_size, holding_period):
     weights = optimal_portfolio(training_returns, training_cov)
     weight_history_cov.append(weights)
     portfolio_returns_cov.extend(test_returns.to_numpy() @ weights)
-
-
-# In[153]:
-
 
 def training_exponential(training_returns, lmbd=0.94):
     data = training_returns.to_numpy()
@@ -137,10 +135,6 @@ for i in range(0,len(returns) - window_size, holding_period):
     weight_history_exp.append(weights)
     portfolio_returns_exp.extend(test_returns.to_numpy() @ weights)
 
-
-# In[157]:
-
-
 def training_ledoit(training_returns):
     training_mean_returns = training_returns.mean().to_numpy()
 
@@ -162,9 +156,6 @@ for i in range(0,len(returns) - window_size, holding_period):
     portfolio_returns_ledoit.extend(test_returns.to_numpy() @ weights)
 
 
-# In[160]:
-
-
 w_even = np.ones(10) / 10
 
 portfolio_returns_even = []
@@ -173,18 +164,12 @@ for i in range(0,len(returns) - window_size, holding_period):
     test_returns = returns.iloc[i + window_size: i + window_size + holding_period]
     portfolio_returns_even.extend(test_returns.to_numpy() @ w_even)
 
-
-# In[162]:
-
+# Performance analysis
 
 sample_returns = np.array(portfolio_returns_cov)
 exp_returns = np.array(portfolio_returns_exp)
 shrinkage_returns = np.array(portfolio_returns_ledoit)
 even_returns = np.array(portfolio_returns_even)
-
-
-# In[168]:
-
 
 sample_wealth = np.cumprod(1 + sample_returns)
 exp_wealth = np.cumprod(1 + exp_returns)
@@ -204,10 +189,6 @@ plt.title("Out-of-Sample Cumulative Wealth")
 plt.legend()
 
 plt.show()
-
-
-# In[164]:
-
 
 def performance_metrics(portfolio_returns):
     portfolio_returns = np.array(portfolio_returns)
@@ -232,29 +213,11 @@ results = pd.DataFrame({"Sample": sample_stats, "Exponential": exp_stats, "Shrin
 
 print(results)
 
-
-# In[62]:
-
-
-#"How sensitive is mean–variance portfolio optimisation to covariance estimation error, and do alternative covariance estimators improve out-of-sample portfolio performance?"
-
-
-# In[ ]:
-
-
-#Do shrinkage and exponentially weighted covariance estimators improve the out-of-sample performance of mean–variance portfolios relative to the sample covariance matrix?
-
-
-# In[170]:
-
+# Portfolio stability
 
 sample_weights = np.array(weight_history_cov)
 exp_weights = np.array(weight_history_exp)
 shrinkage_weights = np.array(weight_history_ledoit)
-
-
-# In[172]:
-
 
 def portfolio_instability(weights):
     turnover = np.sum(np.abs(np.diff(weights, axis=0)), axis=1)
@@ -273,9 +236,7 @@ instability_results = pd.DataFrame({"Sample": sample_instability, "Exponential":
 
 print(instability_results)
 
-
-# In[174]:
-
+# Transaction costs
 
 def apply_transaction_costs(portfolio_returns, weight_history, cost_rate=0.001):
     net_returns = portfolio_returns.copy()
