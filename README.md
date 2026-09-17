@@ -31,7 +31,7 @@ The covariance matrix is estimated separately using sample covariance, EWMA and 
 
 HRP provides an alternative to conventional numerical portfolio optimisation. Correlation distances are used for hierarchical clustering, after which recursive bisection allocates capital according to cluster risk.
 
-An equal-weight portfolio provides a simple diversification benchmark.ides a simple diversification benchmark.
+An equal-weight portfolio provides a simple diversification benchmark.
 
 ## Evaluation
 
@@ -65,6 +65,8 @@ Under the main 252-day estimation window, Ledoit-Wolf produced the lowest realis
 | Equal Weight | 16.74% | 15.96% | 0.861 | -20.67% |
 | HRP | 10.70% | 13.47% | 0.572 | -16.80% |
 
+![Out-of-sample cumulative wealth](cumulative_wealth.png)
+
 The differences between the GMV estimators are relatively small in terms of realised volatility, but their resulting portfolio characteristics differ substantially.
 
 Ledoit-Wolf generated lower concentration and turnover than the sample covariance portfolio. Its average HHI was 0.168 compared with 0.210 for sample covariance, while average turnover was 0.193 compared with 0.221.
@@ -83,6 +85,8 @@ Portfolio results were recalculated using 126-, 252- and 504-day estimation wind
 
 The 252-day specification generated the lowest realised volatility for each of the four actively estimated portfolio methods in this sample. The results also show that covariance-estimation choices remain relevant across different amounts of historical information.
 
+![Sensitivity of out-of-sample volatility to estimation window](window_robustness_volatility.png)
+
 Return and Sharpe-ratio comparisons across these windows should be interpreted cautiously because changing the estimation-window length also changes the starting date of the out-of-sample evaluation period.
 
 ### Portfolio Constraints
@@ -92,6 +96,8 @@ Maximum individual asset weights of 20% and 10% were imposed on the GMV portfoli
 Tighter constraints substantially reduced portfolio concentration. For example, the sample-covariance portfolio's average HHI declined from 0.210 when unconstrained to 0.130 under a 20% cap and 0.087 under a 10% cap.
 
 However, tighter constraints did not produce lower realised volatility in this sample. This illustrates the trade-off between restricting concentrated optimiser solutions and preserving the minimum-variance allocation implied by the estimated covariance matrix.
+
+![Effect of maximum-weight constraints on out-of-sample volatility](constraint_robustness_volatility.png)
 
 ## Conclusions
 
@@ -115,7 +121,7 @@ The project is implemented in Python using:
 - `scikit-learn` for Ledoit-Wolf covariance estimation
 - `Matplotlib` for visualisation
 
-The backtest uses rolling estimation windows with 21-trading-day holding periods and strictly out-of-sample evaluation.
+The backtest uses rolling estimation windows with 21-trading-day holding periods and out-of-sample evaluation.
 
 ## Limitations
 
@@ -129,16 +135,9 @@ Finally, estimation-window robustness tests do not use identical out-of-sample c
 
 ## Repository Structure
 
-The main Python notebook/script contains:
-
-1. Data collection and return construction
-2. Mean-variance efficient frontier
-3. Sample, EWMA and Ledoit-Wolf covariance estimation
-4. Global minimum-variance optimisation
-5. Hierarchical Risk Parity implementation
-6. Rolling out-of-sample backtests
-7. Performance and portfolio-stability analysis
-8. Transaction-cost analysis
-9. Estimation-window robustness tests
-10. Maximum-weight constraint robustness tests
-11. Results visualisation
+- `portfolio-optimisation.py` — main analysis and backtesting code
+- `cumulative_wealth.png` — out-of-sample cumulative wealth comparison
+- `window_robustness_volatility.png` — estimation-window sensitivity
+- `constraint_robustness_volatility.png` — maximum-weight constraint sensitivity
+- `efficient_frontier.png` — sample efficient frontier
+- `requirements.txt` — Python dependencies
