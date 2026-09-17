@@ -1,82 +1,144 @@
-# Portfolio Optimisation and Covariance Estimation
+# Covariance Estimation and Portfolio Robustness
 
-This project investigates how covariance matrix estimation affects the out-of-sample performance and stability of mean-variance optimised portfolios. I compare the standard sample covariance matrix with an exponentially weighted covariance estimator and Ledoit-Wolf shrinkage, using an equally weighted portfolio as a benchmark.
+## Research Question
 
-The analysis uses daily returns for 10 US equities from 2020 to 2024 and evaluates the strategies using a rolling out-of-sample backtest.
+**How does covariance estimation affect out-of-sample portfolio robustness, and when do shrinkage, constraints and hierarchical portfolio construction improve realised performance?**
+
+## Overview
+
+This project investigates how covariance estimation and portfolio construction choices affect the out-of-sample behaviour of minimum-variance portfolios.
+
+Using a diversified universe of 23 US equities from 2020–2024, I compare three covariance estimators within a long-only Global Minimum Variance (GMV) framework:
+
+- Sample covariance
+- Exponentially weighted covariance (EWMA)
+- Ledoit-Wolf shrinkage
+
+These portfolios are evaluated against two alternative allocation benchmarks:
+
+- Equal-weight portfolio
+- Hierarchical Risk Parity (HRP)
+
+The analysis uses rolling out-of-sample backtests to examine not only realised return and volatility, but also portfolio concentration, turnover, transaction costs and sensitivity to estimation-window and portfolio-constraint choices.
 
 ## Methodology
 
-Portfolio weights are selected by maximising the Sharpe ratio subject to long-only weights and full investment constraints. Expected returns are estimated using the sample mean across all methods, allowing the experiment to isolate the effect of changing the covariance estimator.
+Daily equity returns are used to estimate covariance matrices over rolling historical windows. Portfolio weights are re-estimated every 21 trading days and evaluated on the subsequent out-of-sample period.
 
-Three covariance estimation methods are compared:
+For the main specification, covariance matrices are estimated using a 252-trading-day window. Global Minimum Variance (GMV) portfolios are constructed by minimising estimated portfolio variance, subject to the portfolio being fully invested, long-only, and with individual weights between 0 and 100%.
 
-- **Sample covariance** – the conventional historical covariance matrix.
-- **Exponentially weighted covariance** – gives greater weight to more recent observations using a decay factor of 0.94.
-- **Ledoit-Wolf shrinkage** – shrinks the sample covariance matrix towards a more structured target to reduce estimation error.
+The covariance matrix is estimated separately using sample covariance, EWMA and Ledoit-Wolf shrinkage.
 
-The strategies are evaluated using a 252-trading-day rolling estimation window and a 21-trading-day holding period. A 1/N equally weighted portfolio is included as a benchmark.
+HRP provides an alternative to conventional numerical portfolio optimisation. Correlation distances are used for hierarchical clustering, after which recursive bisection allocates capital according to cluster risk.
 
-## Efficient Frontier
+An equal-weight portfolio provides a simple diversification benchmark.ides a simple diversification benchmark.
 
-The efficient frontier illustrates the minimum achievable portfolio variance across a range of target expected returns under long-only constraints.
+## Evaluation
 
-<p align="center">
-  <img src="efficient_frontier.png" width="700">
-</p>
+Out-of-sample portfolios are compared using:
 
-## Out-of-Sample Performance
+- Annualised return
+- Annualised volatility
+- Sharpe ratio
+- Maximum drawdown
+- Portfolio turnover
+- Maximum individual asset weight
+- Herfindahl-Hirschman Index (HHI)
+- Performance after transaction costs
 
-Each covariance estimator is re-estimated using the previous 252 trading days. The resulting maximum-Sharpe portfolio is then held for the following 21 trading days before rebalancing.
+Additional robustness tests vary:
 
-<p align="center">
-  <img src="cumulative_wealth.png" width="700">
-</p>
+- **Estimation window:** 126, 252 and 504 trading days
+- **Maximum asset weight:** unconstrained, 20% and 10%
 
-| Method | Annual Return | Annual Volatility | Sharpe Ratio | Maximum Drawdown |
-|---|---:|---:|---:|---:|
-| Sample Covariance | 34.24% | 24.37% | 1.285 | -17.42% |
-| Exponential | 32.10% | 22.53% | 1.292 | -19.61% |
-| Ledoit-Wolf | 34.79% | 24.52% | 1.296 | -17.49% |
-| Equal Weight | 20.28% | 19.26% | 0.897 | -29.21% |
+This allows the analysis to distinguish realised risk performance from portfolio stability and diversification.
 
-All three optimised portfolios substantially outperformed the equal-weight benchmark over the out-of-sample period. Ledoit-Wolf shrinkage produced the highest annual return and Sharpe ratio, while the exponentially weighted estimator achieved lower volatility but also a lower return.
+## Main Results
 
-## Portfolio Stability
-
-To examine the sensitivity of the optimised portfolios to changing estimates, I measure turnover between consecutive rebalancing periods and the average maximum individual asset weight.
-
-| Method | Average Turnover | Average Maximum Weight |
-|---|---:|---:|
-| Sample Covariance | 0.438 | 0.535 |
-| Exponential | 0.675 | 0.509 |
-| Ledoit-Wolf | 0.420 | 0.518 |
-
-Ledoit-Wolf produced the lowest average turnover, suggesting greater stability between rebalancing periods. The exponentially weighted estimator generated substantially higher turnover despite having a slightly lower average maximum asset weight.
-
-## Transaction Costs
-
-To test whether the performance advantage survives trading costs, proportional transaction costs of 0.1% of portfolio turnover are applied at each rebalance.
+Under the main 252-day estimation window, Ledoit-Wolf produced the lowest realised volatility among the GMV covariance estimators:
 
 | Method | Annual Return | Annual Volatility | Sharpe Ratio | Maximum Drawdown |
 |---|---:|---:|---:|---:|
-| Sample Covariance | 33.81% | 24.37% | 1.264 | -17.53% |
-| Exponential | 31.30% | 22.52% | 1.257 | -19.72% |
-| Ledoit-Wolf | 34.29% | 24.52% | 1.276 | -17.60% |
+| Sample Covariance | 6.22% | 12.57% | 0.257 | -16.12% |
+| EWMA | 7.12% | 12.99% | 0.317 | -19.50% |
+| Ledoit-Wolf | 6.59% | 12.50% | 0.287 | -15.97% |
+| Equal Weight | 16.74% | 15.96% | 0.861 | -20.67% |
+| HRP | 10.70% | 13.47% | 0.572 | -16.80% |
 
-Ledoit-Wolf retains the highest Sharpe ratio after transaction costs. The higher turnover of the exponentially weighted strategy causes a larger deterioration in its performance once trading costs are introduced.
+The differences between the GMV estimators are relatively small in terms of realised volatility, but their resulting portfolio characteristics differ substantially.
 
-## Conclusion
+Ledoit-Wolf generated lower concentration and turnover than the sample covariance portfolio. Its average HHI was 0.168 compared with 0.210 for sample covariance, while average turnover was 0.193 compared with 0.221.
 
-The results suggest that covariance estimation has a meaningful effect on both portfolio performance and stability. In this experiment, Ledoit-Wolf shrinkage provided the strongest overall results: it achieved the highest out-of-sample return and Sharpe ratio while also producing the lowest portfolio turnover.
+EWMA generated substantially greater portfolio turnover (0.953). As a result, its performance was more sensitive to transaction costs: its annual return fell from approximately 7.12% to 6.00% after costs.
 
-Exponential weighting reduced realised volatility but generated considerably more turnover, weakening its performance once transaction costs were included. The results therefore suggest that reducing covariance estimation error through shrinkage can improve the robustness of mean-variance optimisation.
+HRP produced the most diversified allocations. Its average maximum asset weight was approximately 12.4%, compared with 29–35% for the unconstrained GMV portfolios, while its average HHI was only 0.062. This diversification came with higher realised volatility than the GMV portfolios.
 
-## Limitations and Extensions
+Equal weighting generated the highest return and Sharpe ratio over the particular out-of-sample period, although with substantially higher volatility than the GMV strategies.
 
-The analysis is based on a relatively small universe of 10 US equities and a single historical period, so the results should not be interpreted as evidence that one estimator will dominate across all markets or regimes. Expected returns are also estimated using historical sample means, which are themselves subject to substantial estimation error.
+## Robustness Tests
 
-Possible extensions include testing a larger asset universe, varying the estimation and rebalancing windows, examining different market periods and performing additional sensitivity analysis on the transaction-cost assumption.
+### Estimation Window
 
-## Technologies
+Portfolio results were recalculated using 126-, 252- and 504-day estimation windows.
 
-Python, NumPy, pandas, SciPy, scikit-learn, Matplotlib and yfinance.
+The 252-day specification generated the lowest realised volatility for each of the four actively estimated portfolio methods in this sample. The results also show that covariance-estimation choices remain relevant across different amounts of historical information.
+
+Return and Sharpe-ratio comparisons across these windows should be interpreted cautiously because changing the estimation-window length also changes the starting date of the out-of-sample evaluation period.
+
+### Portfolio Constraints
+
+Maximum individual asset weights of 20% and 10% were imposed on the GMV portfolios.
+
+Tighter constraints substantially reduced portfolio concentration. For example, the sample-covariance portfolio's average HHI declined from 0.210 when unconstrained to 0.130 under a 20% cap and 0.087 under a 10% cap.
+
+However, tighter constraints did not produce lower realised volatility in this sample. This illustrates the trade-off between restricting concentrated optimiser solutions and preserving the minimum-variance allocation implied by the estimated covariance matrix.
+
+## Conclusions
+
+The results suggest that covariance estimation affects portfolio robustness through more than realised volatility alone.
+
+Ledoit-Wolf shrinkage produced a less concentrated and more stable GMV portfolio than sample covariance while achieving slightly lower realised volatility in the main specification. EWMA responded more aggressively to changing observations, generating substantially higher turnover and greater sensitivity to transaction costs.
+
+HRP provided a different form of robustness: hierarchical clustering and recursive risk allocation produced considerably more diversified portfolios without relying on conventional minimum-variance optimisation, although realised volatility was higher than for the GMV portfolios.
+
+Explicit weight constraints were also effective at controlling concentration, but tighter diversification constraints did not automatically improve realised risk.
+
+Overall, the analysis highlights a trade-off between **risk minimisation, diversification and allocation stability**. Improving the robustness of portfolio construction therefore depends not only on selecting a covariance estimator, but also on controlling how estimation uncertainty propagates into portfolio weights.
+
+## Implementation
+
+The project is implemented in Python using:
+
+- `pandas` and `NumPy` for data manipulation
+- `yfinance` for historical equity data
+- `SciPy` for constrained optimisation and hierarchical clustering
+- `scikit-learn` for Ledoit-Wolf covariance estimation
+- `Matplotlib` for visualisation
+
+The backtest uses rolling estimation windows with 21-trading-day holding periods and strictly out-of-sample evaluation.
+
+## Limitations
+
+The results are specific to the selected asset universe and sample period and should not be interpreted as evidence that any portfolio method universally outperforms another.
+
+Covariance estimation error is not observed directly because the true covariance matrix is unknown. Instead, the project evaluates its practical consequences by comparing alternative estimators through the out-of-sample portfolios they produce.
+
+The transaction-cost model is simplified and applies proportional costs based on changes between successive target portfolio weights. More detailed implementations could account for weight drift, bid-ask spreads and asset-specific trading costs.
+
+Finally, estimation-window robustness tests do not use identical out-of-sample calendar periods, so differences in return across window lengths partly reflect differences in the evaluation period.
+
+## Repository Structure
+
+The main Python notebook/script contains:
+
+1. Data collection and return construction
+2. Mean-variance efficient frontier
+3. Sample, EWMA and Ledoit-Wolf covariance estimation
+4. Global minimum-variance optimisation
+5. Hierarchical Risk Parity implementation
+6. Rolling out-of-sample backtests
+7. Performance and portfolio-stability analysis
+8. Transaction-cost analysis
+9. Estimation-window robustness tests
+10. Maximum-weight constraint robustness tests
+11. Results visualisation
