@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[67]:
-
-
 import yfinance as yf
 import pandas as pd
 import datetime
@@ -13,6 +7,8 @@ import matplotlib.pyplot as plt
 from sklearn.covariance import LedoitWolf
 from scipy.cluster.hierarchy import linkage, leaves_list
 from scipy.spatial.distance import squareform
+
+# Data and returns
 
 tickers = [
     # Technology / Communication
@@ -52,6 +48,8 @@ returns = returns[tickers]
 
 mean_returns = returns.mean().to_numpy()
 cov_matrix = returns.cov().to_numpy()
+
+# Efficient frontier
 
 def portfolio_variance_cov_matrix(w):
     w = np.array(w)
@@ -98,15 +96,10 @@ def portfolio_variance(w, cov_matrix):
     w = np.array(w)
     return w.T @ cov_matrix @ w
 
-
-# In[69]:
-
+# Covariance estimators
 
 window_size = 252
 holding_period = 21
-
-
-# In[71]:
 
 
 def training_cov(training_returns):
@@ -130,10 +123,8 @@ def training_ledoit(training_returns):
     lw.fit(training_returns.to_numpy())
     training_cov_matrix = lw.covariance_
     return training_mean_returns, training_cov_matrix
-
-
-# In[73]:
-
+    
+# Global minimum variance optimisation
 
 def optimal_portfolio(training_returns, estimator, max_weight=1.0):
 
@@ -146,9 +137,7 @@ def optimal_portfolio(training_returns, estimator, max_weight=1.0):
         raise RuntimeError(result.message)
     return result.x
 
-
-# In[75]:
-
+# Hierarchical Risk Parity
 
 def inverse_variance_weights(cov_matrix):
     variances = np.diag(cov_matrix)
@@ -198,9 +187,7 @@ def hrp_weights(training_returns):
     weights = weights.reindex(training_returns.columns)
     return weights.to_numpy()
 
-
-# In[77]:
-
+# Rolling out-of-sample backtests
 
 def run_gmv_backtest(window_size, estimator, max_weight=1.0):
     weight_history = []
@@ -225,9 +212,6 @@ def run_hrp_backtest(window_size):
     return np.array(portfolio_returns), np.array(weight_history)
 
 
-# In[79]:
-
-
 w_even = np.ones(len(tickers)) / len(tickers)
 portfolio_returns_even = []
 
@@ -235,9 +219,7 @@ for i in range(0,len(returns) - window_size, holding_period):
     test_returns = returns.iloc[i + window_size: i + window_size + holding_period]
     portfolio_returns_even.extend(test_returns.to_numpy() @ w_even)
 
-
-# In[81]:
-
+# Main results
 
 portfolio_returns_sample, weight_history_sample = run_gmv_backtest(252, training_cov)
 
@@ -248,17 +230,11 @@ portfolio_returns_shrinkage, weight_history_shrinkage = run_gmv_backtest(252, tr
 portfolio_returns_hrp, weight_history_hrp = run_hrp_backtest(252)
 
 
-# In[82]:
-
-
 sample_returns = np.array(portfolio_returns_sample)
 exp_returns = np.array(portfolio_returns_exp)
 shrinkage_returns = np.array(portfolio_returns_shrinkage)
 hrp_returns = np.array(portfolio_returns_hrp)
 even_returns = np.array(portfolio_returns_even)
-
-
-# In[83]:
 
 
 sample_wealth = np.cumprod(1 + sample_returns)
@@ -283,9 +259,7 @@ plt.legend()
 plt.savefig("cumulative_wealth.png", dpi=300, bbox_inches="tight")
 plt.show()
 
-
-# In[87]:
-
+# Performance metrics
 
 def performance_metrics(portfolio_returns):
     portfolio_returns = np.array(portfolio_returns)
@@ -311,17 +285,12 @@ results = pd.DataFrame({"Sample": sample_stats, "Exponential": exp_stats, "Shrin
 
 print(results)
 
-
-# In[89]:
-
+# Portfolio concentration and turnover
 
 sample_weights = np.array(weight_history_sample)
 exp_weights = np.array(weight_history_exp)
 shrinkage_weights = np.array(weight_history_shrinkage)
 hrp_weights_array = np.array(weight_history_hrp)
-
-
-# In[91]:
 
 
 def portfolio_instability(weights):
@@ -347,9 +316,7 @@ instability_results = pd.DataFrame({"Sample": sample_instability, "Exponential":
 
 print(instability_results)
 
-
-# In[93]:
-
+# Transaction costs
 
 def apply_transaction_costs(portfolio_returns, weight_history, cost_rate=0.001):
     net_returns = portfolio_returns.copy()
@@ -373,9 +340,7 @@ net_results = pd.DataFrame({"Sample": sample_net_stats, "Exponential": exp_net_s
 
 print(net_results)
 
-
-# In[97]:
-
+# Estimation window robustness
 
 robustness_windows = [126, 252, 504]
 window_results = []
@@ -398,16 +363,11 @@ print("\nESTIMATION WINDOW ROBUSTNESS")
 print(window_robustness_results.round(4))
 
 
-# In[99]:
-
 
 volatility_by_window = window_robustness_results.pivot(index="Window", columns="Method", values="Annual Volatility")
 
 print("\nANNUAL VOLATILITY BY ESTIMATION WINDOW")
 print(volatility_by_window.round(4))
-
-
-# In[101]:
 
 
 hhi_by_window = window_robustness_results.pivot(index="Window", columns="Method", values="Average HHI")
@@ -416,14 +376,10 @@ print("\nAVERAGE HHI BY ESTIMATION WINDOW")
 print(hhi_by_window.round(4))
 
 
-# In[103]:
-
 
 window_robustness_results.to_csv("window_robustness_results.csv", index=False)
 
-
-# In[55]:
-
+# Weight Cap Robustness
 
 weight_caps = [1.00, 0.20, 0.10]
 constraint_results = []
@@ -440,16 +396,11 @@ print("\nMAXIMUM-WEIGHT CONSTRAINT ROBUSTNESS")
 print(constraint_robustness_results.round(4))
 
 
-# In[57]:
-
-
 constraint_volatility = constraint_robustness_results.pivot(index="Maximum Weight Constraint", columns="Method", values="Annual Volatility")
 
 print("\nANNUAL VOLATILITY BY WEIGHT CONSTRAINT")
 print(constraint_volatility.round(4))
 
-
-# In[59]:
 
 
 constraint_hhi = constraint_robustness_results.pivot(index="Maximum Weight Constraint", columns="Method", values="Average HHI")
@@ -458,13 +409,9 @@ print("\nAVERAGE HHI BY WEIGHT CONSTRAINT")
 print(constraint_hhi.round(4))
 
 
-# In[61]:
-
 
 constraint_robustness_results.to_csv("constraint_robustness_results.csv", index=False)
 
-
-# In[105]:
 
 
 plt.figure(figsize=(10, 6))
@@ -482,9 +429,6 @@ plt.savefig("window_robustness_volatility.png", dpi=300, bbox_inches="tight")
 plt.show()
 
 
-# In[65]:
-
-
 plt.figure(figsize=(10, 6))
 
 for method in constraint_volatility.columns:
@@ -498,9 +442,6 @@ plt.grid(alpha=0.3)
 
 plt.savefig("constraint_robustness_volatility.png", dpi=300, bbox_inches="tight")
 plt.show()
-
-
-# In[ ]:
 
 
 
